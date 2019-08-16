@@ -150,7 +150,7 @@ public class FormNuevoEmpleado extends JPanel {
     		    Administrador empleado = new Administrador();
     		    empleado.registrarNuevoEmpleado(cajaCui.getText(),
     			    cajaNombres.getText(),
-    			    cajaApellidos.getText(),
+    			    cajaApellidos.getText(),  //agregar caja de salario
     			    cajaDireccion.getText(),
     			    cajaCorreo.getText(),
     			    comboTipo.getSelectedIndex() +1,
