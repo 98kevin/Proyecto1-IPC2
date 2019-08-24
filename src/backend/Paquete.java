@@ -1,29 +1,47 @@
 package backend;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.util.Calendar;
+import java.sql.Date;
 import java.util.LinkedList;
 
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
-public class Paquete {
+public class Paquete implements Actualizable{
     
-    String idPaquete;
+    private int idPaquete;
     private String descripcion;
-    String idPunto;
-    Date fechaDeIngreso;
-    int casillero;
-    boolean priorizado;
-    int libras;
-    int idFactura;
-    double precioCliente;
-    double costoEmpresa;
-    boolean entregado;
-    private String idDestino;
+    private String idPunto;
+    private int idDestino;
+    private Date fechaDeIngreso;
+    private int casillero;
+    private boolean priorizado;
+    private int libras;
+    private int idFactura;
+    private double precioCliente;
+    private double costoEmpresa;
+    private boolean retirado;
+    private boolean estaBodega;
+    private boolean llegoDestino;
 
+    private final String COL_DESCR="descripcion";
+    private final String COL_ID_PUNTO="idPunto";
+    private final String COL_ID_DESTINO = "idDestino";
+    private final String COL_FECHA_INGRESO="fechaDeIngreso";
+    private final String COL_CASILLERO="casilleroCliente";
+    private final String COL_PRIORIZADO="priorizado";
+    private final String COL_LIBRAS="libras";
+    private final String COL_ID_FACTURA="idFactura";
+    private final String COL_COSTO="costo";
+    private final String COL_PRECIO="precioCliente";
+    private final String COL_RETIRADO="retirado";
+    private final String COL_ESTA_BODEGA="estaBodega";
+    private final String COL_LLEGO_DESTINO="llegoDestino";
+    
     /**
      * @param idPaquete
      * @param idPunto
@@ -36,9 +54,10 @@ public class Paquete {
      * @param tarifaDeOperacion
      * @param precioDestino
      */
-    public Paquete(String idPaquete, 
+    public Paquete(int idPaquete, 
 	    String descripcion, 
 	    String idPunto, 
+	    int idDestino,
 	    Date fechaDeIngreso, 
 	    int casillero, 
 	    boolean priorizado,
@@ -48,6 +67,7 @@ public class Paquete {
 	this.idPaquete = idPaquete;
 	this.descripcion = descripcion;
 	this.idPunto = idPunto;
+	this.idDestino=idDestino;
 	this.fechaDeIngreso = fechaDeIngreso;
 	this.casillero = casillero;
 	this.priorizado = priorizado;
@@ -64,14 +84,17 @@ public class Paquete {
      * @param idDestino
      * @param precioDestino
      */
-    public Paquete(String casillero,String descripcion,  String libras,  boolean priorizado,String idDestino) {
+    public Paquete(String casillero,String descripcion,  String libras,  boolean priorizado,String idDestino, int idFactura) {
 	super();
 	try {
 		this.casillero = Integer.parseInt(casillero);
 		this.descripcion = descripcion;
 		this.libras = Integer.parseInt(libras);
 		this.priorizado = priorizado;
-		this.idDestino = idDestino;
+		this.idDestino = Integer.parseInt(idDestino);
+		this.idFactura=idFactura;
+		this.estaBodega=true;
+		this.llegoDestino=false;
 	} catch (NumberFormatException e) {
 	    JOptionPane.showMessageDialog(null, "Error en los formatos de ingreso. Ingrese valores validos. ");
 	}
@@ -82,29 +105,55 @@ public class Paquete {
     }
     
     /**
+     * Crea un nuevo paquete en base a un ResulSet de una consulta
+     * @param paquete
+     */
+    public Paquete(ResultSet paquete) {
+	super();
+	try {
+	    	this.idPaquete = paquete.getInt(1);
+	    	this.descripcion = paquete.getString(2);
+    		this.idPunto =paquete.getString(3);
+    		this.idDestino=paquete.getInt(4);
+    		this.fechaDeIngreso =paquete.getDate(5);
+    		this.casillero =paquete.getInt(6);
+    		this.priorizado = paquete.getBoolean(7);
+    		this.libras = paquete.getInt(8);
+    		this.idFactura = paquete.getInt(9);
+    		this.costoEmpresa=paquete.getDouble(10);
+    		this.precioCliente =paquete.getDouble(11);
+    		this.retirado =paquete.getBoolean(12);
+    		this.estaBodega=paquete.getBoolean(13);
+    		this.llegoDestino=paquete.getBoolean(14);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+	
+    }
+    /**
      * @return the idDestino
      */
-    public String getIdDestino() {
+    public int getIdDestino() {
         return idDestino;
     }
 
     /**
      * @param idDestino the idDestino to set
      */
-    public void setIdDestino(String idDestino) {
+    public void setIdDestino(int idDestino) {
         this.idDestino = idDestino;
     }
 
     /**
      * @return the idPaquete
      */
-    public String getIdPaquete() {
+    public int getIdPaquete() {
         return idPaquete;
     }
     /**
      * @param idPaquete the idPaquete to set
      */
-    public void setIdPaquete(String idPaquete) {
+    public void setIdPaquete(int idPaquete) {
         this.idPaquete = idPaquete;
     }
     /**
@@ -209,13 +258,13 @@ public class Paquete {
      * @return the retiradoPorDuenio
      */
     public boolean isRetiradoPorDuenio() {
-        return entregado;
+        return retirado;
     }
     /**
      * @param retiradoPorDuenio the retiradoPorDuenio to set
      */
     public void setRetiradoPorDuenio(boolean entregado) {
-        this.entregado = entregado;
+        this.retirado = entregado;
     }
     /**
      * @return the descripcion
@@ -233,13 +282,37 @@ public class Paquete {
      * @return the entregado
      */
     public boolean isEntregado() {
-        return entregado;
+        return retirado;
+    }
+    /**
+     * @return the bodega
+     */
+    public boolean isBodega() {
+        return estaBodega;
+    }
+    /**
+     * @param bodega the bodega to set
+     */
+    public void setBodega(boolean bodega) {
+        this.estaBodega = bodega;
+    }
+    /**
+     * @return the llego
+     */
+    public boolean isLlego() {
+        return llegoDestino;
+    }
+    /**
+     * @param llego the llego to set
+     */
+    public void setLlego(boolean llego) {
+        this.llegoDestino = llego;
     }
     /**
      * @param entregado the entregado to set
      */
     public void setEntregado(boolean entregado) {
-        this.entregado = entregado;
+        this.retirado = entregado;
     }
     /**
      * @param casillero the casillero to set
@@ -248,16 +321,17 @@ public class Paquete {
         this.casillero = casillero;
     }
     
-    public void llenarTablaDePaquetes(JTable table, LinkedList <Paquete> paquetes) {
+    public JTable llenarTablaDePaquetes(JTable table, LinkedList <Paquete> paquetes) {
 	String columnas [] = {"Codigo","Descripcion", "Destino", "Precio"};
 	Object datos [][]= new Object[paquetes.size()][4];
 	int ultimo = SqlConection.getUltimo("Paquete", "idPaquete");
 	String nombreDestino=null;
+	ResultSet destino=null;
 	//lee todos los paquetes en la lista enlzada y los los agrega a la tabla
 	for (int i = 0; i < paquetes.size(); i++) {
 	    datos[i][0]=(ultimo+1+i);
 	    try {
-		 ResultSet destino =SqlConection.generarConsulta("nombre", "Destino", "WHERE idDestino="+paquetes.get(i).getIdDestino());
+		 destino =SqlConection.generarConsulta("nombre", "Destino", "WHERE idDestino="+paquetes.get(i).getIdDestino());
 		 destino.next();
 		 nombreDestino= destino.getString(1);
 	    } catch (SQLException e) {
@@ -272,7 +346,70 @@ public class Paquete {
 	    paquetes.get(i).setPrecio(precio);
 	    datos[i][3]=precio;
 	}
-	table = new JTable(new DefaultTableModel(datos, columnas));
+	return new JTable(new DefaultTableModel(datos, columnas));
     }
     
+    @Override
+    public String getColumnas() {
+	return "("+COL_DESCR+", "
+		+COL_ID_PUNTO+", "
+		+COL_ID_DESTINO+", "
+		+COL_FECHA_INGRESO+", "
+		+COL_CASILLERO+", "
+		+COL_PRIORIZADO+", "
+		+COL_LIBRAS+", "
+		+COL_ID_FACTURA+", "
+		+COL_COSTO+", "
+		+COL_PRECIO+", "
+		+COL_RETIRADO+", "
+		+COL_ESTA_BODEGA +", "
+		+COL_LLEGO_DESTINO+")";
+    }
+    @Override
+    public String getSentence() {
+	/*
+	 * El parametro de idRuta es null, porque no se ha ingresado a ninguna ruta, 
+	 * El costo de operacion al inicio es de 0
+	 * Aun no ha sido retirado por lo que el parametro es 'false'
+	 */
+	return "('"+this.getDescripcion()
+	+"', "+this.getIdPunto()
+	+", "+this.getIdDestino()
+	+", '"+getFechaHoraSQL()
+	+"', "+this.getCasillero()
+	+", "+this.isPriorizado()
+	+", "+this.getLibras()
+	+", "+this.getIdFactura()
+	+", 0"
+	+ ", "+this.getPrecio()
+	+",false"
+	+ ",true"
+	+ ",false)" ; 
+    }
+
+    private String getFechaHoraSQL() {
+	long timeInMillis= Calendar.getInstance().getTimeInMillis();
+	Date f = new Date(timeInMillis);
+	Time h= new Time(timeInMillis);
+	return f.toString()+" "+h.toString();
+    }
+    
+    public boolean integro() {
+	return (this.getCasillero()>=0 & this.idDestino>=0 & this.getLibras()>0) ? true : false;
+    }
+    
+    public String getIdRuta(String codigo) {
+	String ruta =null;
+	ResultSet consulta=SqlConection.generarConsulta("r.idRuta","Paquete p, PuntoDeControl q, Ruta r", 
+		"WHERE p.idPaquete = "+codigo
+		+ " AND p.idPunto=q.idPunto "
+		+ " AND q.idRuta = r.idRuta");
+	try {
+	    consulta.next();
+	    ruta = consulta.getString(1);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+	return ruta;
+    }
 }

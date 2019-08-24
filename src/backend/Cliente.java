@@ -9,7 +9,7 @@ import frontend.FormNuevoCliente;
 
 public class Cliente extends Persona{
 	
-	private final String TABLA = "Cliente";
+	public static final String TABLA = "Cliente";
 	private final String COL_CASILLERO = "casillero";
 	private final String COL_NIT= "nit";
 	private final String COL_APELLIDOS= "apellidos";
@@ -76,26 +76,13 @@ public class Cliente extends Persona{
 		JOptionPane.showMessageDialog(null, "Formato de casillero incorrecto, ingrese un numero");
 		e.printStackTrace();
 	    }
-	    catch(SQLException ex) {
+	    catch(Exception ex) {
 		JOptionPane.showMessageDialog(null, "Error de lectura de datos");
 		ex.printStackTrace();
 	    }
 	    return cliente;
 	}
 
-	public Cliente registrarNuevoCliente(int casilleroTexto, String nit, String nombres, String apellidos, String direccion, String correoElectronico) {
-	    Cliente nuevoCliente=null;
-	    try {
-			int casillero = casilleroTexto;
-		    	nuevoCliente = new Cliente(casillero,nit, nombres, apellidos, direccion, correoElectronico);
-		    	SqlConection.escribirRegistro(TABLA,
-			nuevoCliente.getColumnas() , 
-			nuevoCliente.getSentence());
-	    } catch (NumberFormatException e) {
-		JOptionPane.showMessageDialog(null, "Erro de codigo de casillero");
-	    }
-	    return nuevoCliente;
-	}
 
 	@Override
 	public String getSentence() {

@@ -1,9 +1,16 @@
 package backend;
 
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
+import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
 
 public class Administrador extends Empleado{
     
@@ -30,12 +37,18 @@ public class Administrador extends Empleado{
 	
 	public void crearRuta(String nombre, int idDestino) {
 	    try {
+		//creamos una nueva ruta con los parametros dados, con cero paquetes registrados
 	 		Ruta nuevaRuta =new Ruta(nombre,idDestino, 0);
+	 		//nos aseguramos que el autoCommit este activado
+	 		Main.conexion.setAutoCommit(true);
+	 		//Escribimos el registro en la base de datos
 	 		SqlConection.escribirRegistro("Ruta", 
 	 			nuevaRuta.getColumnas(), 
 	 			nuevaRuta.getSentence());
 	 	    } catch (NumberFormatException e) {
 	 		JOptionPane.showMessageDialog(null, "Formato de numero incorrecto");
+	 	    } catch(SQLException ex) {
+	 		ex.printStackTrace();
 	 	    }
 	}
 	
@@ -49,15 +62,17 @@ public class Administrador extends Empleado{
 	public void desactivarRuta(Ruta ruta) {}
 	
 	/**
-	 * Agrega los puntos de control asignados a la ruta. 
-	 * @param idRuta Codigo de la ruta que referencian los puntos de control 
-	 * @param listaDePuntos Listado de puntos de control a asignar. 
+	 * Asigna las sentencias al arraylist para la transaccion
+	 * @param sentencias El arrego de sentencias
+	 * @param listaDePuntos Los puntos de control a agregar
 	 */
-	public void agragarPuntosDeControl(int idRuta, LinkedList<PuntoDeControl> listaDePuntos) {
+	public void obtenerSentencias(ArrayList<String> sentencias, LinkedList<PuntoDeControl> listaDePuntos) {
+	    //obtenemos una sentencia para cada registro
 	    for (int i = 0; i < listaDePuntos.size(); i++) {
-		SqlConection.escribirRegistro(PuntoDeControl.TABLA, 
-			listaDePuntos.get(i).getColumnas(), 
-			listaDePuntos.get(i).getSentence());
+		sentencias.add("INSERT INTO "+ 
+			PuntoDeControl.TABLA+
+			listaDePuntos.get(i).getColumnas() +
+			"VALUES" + listaDePuntos.get(i).getSentence());
 	    }
 	}
 	
@@ -67,9 +82,11 @@ public class Administrador extends Empleado{
 	
 	public void setPrecioDePriorizacion(double nuevoPrecio) {}
 
-	public void registrarNuevoEmpleado(String cui, String nombres, String apellidos, double salario, String direccion, String correo, int tipo,
+	public void registrarNuevoEmpleado(String cui, String nombres, String apellidos, String salarioTexto, String direccion, String correo, int tipo,
 		Date fecha, String pass1, String pass2) {
-	    	if(pass1.equals(pass2)) {
+	    double salario= Double.parseDouble(salarioTexto);
+	    try {
+		if(pass1.equals(pass2)) {
 	    	    Empleado nuevoEmpleado =new Empleado(cui,nombres,apellidos,salario,direccion,correo,true,tipo,fecha,pass1);
 	    	    SqlConection.escribirRegistro(Empleado.TABLA, 
 	    		    nuevoEmpleado.getColumnas(), 
@@ -77,6 +94,10 @@ public class Administrador extends Empleado{
 	    	}
 	    	else
 	    	    JOptionPane.showMessageDialog(null, "Contrasenias no coinciden", "Error de Ingreso", JOptionPane.ERROR_MESSAGE);
+	    } catch (NumberFormatException e) {
+		JOptionPane.showMessageDialog(null, "Salario no valido", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+	    }
+	    
 	}
 
 	public void crearDestino(String textoNombreDestino, String textoPrecio) {
@@ -94,5 +115,62 @@ public class Administrador extends Empleado{
 	}
 	
 	
+	public String contadorDePaquetesEnRuta(String fechaInicial, String fechaFinal) {
+	    String statement="(";
+	    statement= "(SELECT COUNT(*)   "
+	    	+ "FROM Paquete p, PuntoDeControl q, Ruta r     "
+	    	+ "WHERE p.idPunto=q.idPunto   "
+	    	+ "AND q.idRuta= r.idRuta "
+	    	+ "AND q.idRuta=c.idRuta "
+	    	+ "AND p.llegoDestino=FALSE";
+	    if(!fechaInicial.equals(""))
+		statement.concat(" AND p.fechaDeIngreso >= '" +fechaInicial+"'");
+	    if(!fechaFinal.equals("")) 
+		statement.concat(" AND p.fechaDeIngreso <= '" +fechaFinal+"'");
+	     statement.concat(")");
+	    return statement;
+	}
 	
+	public String contadorDePaquetesFueraDeRuta(String fechaInicial, String fechaFinal) {
+	    String statement="(";
+	    statement= "(SELECT COUNT(*)   "
+	    	+ "FROM Paquete p, PuntoDeControl q, Ruta r     "
+	    	+ "WHERE p.idPunto=q.idPunto   "
+	    	+ "AND q.idRuta= r.idRuta "
+	    	+ "AND q.idRuta=c.idRuta "
+	    	+ "AND p.llegoDestino=TRUE";
+	    if(!fechaInicial.equals(""))
+		statement.concat(" AND p.fechaDeIngreso >= '" +fechaInicial+"'");
+	    if(!fechaFinal.equals("")) 
+		statement.concat(" AND p.fechaDeIngreso <= '" +fechaFinal+"'");
+	     statement.concat(")");
+	    return statement;
+	}
+	
+	
+	public void reporteDeRutas(JTable tabla, String fechaInicial, String fechaFinal, JCheckBox rutasActivas, JCheckBox rutasInactivas) {
+	    Statement consulta;
+	    try {
+		consulta = Main.conexion.createStatement();
+		//generamos la consulta con la base de datos 
+		ResultSet resultados = consulta.executeQuery(
+			//campos a mostar con sus respectivos alias
+			"SELECT c.idRuta as 'Codigo', c.nombre , d.nombre as 'Destino', c.estado, "
+			//el contador de paquetes fuera de fuera de ruta 
+			+contadorDePaquetesFueraDeRuta(fechaInicial, fechaFinal)+ "as 'Paquetes Fuera',"
+			//el contador de paquetes en ruta acutalmente
+			+ contadorDePaquetesEnRuta(fechaInicial, fechaFinal)+ " as 'Paquetes en Ruta', "
+			//Las tablas doonde se consultara la informacion
+			+ "FROM Ruta c, Destino d "
+			//condiciones Where pera filtrar los datos 
+			+ "WHERE c.idDestino=d.idDestino "
+			//TODO terminar este codigo para filtrar los tipos de rutas 
+			+ "AND c.estado=TRUE");
+		DefaultTableModel model = new DefaultTableModel();
+		Tablas.actualizarTabla(resultados, model);
+	    } catch (SQLException e) {
+		e.printStackTrace();
+	    }
+	    
+	}
 }

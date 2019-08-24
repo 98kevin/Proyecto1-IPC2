@@ -1,12 +1,17 @@
 package backend;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.LinkedList;
 
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
-public class PuntoDeControl implements Actualizable {
+public class PuntoDeControl extends Lugar implements Actualizable {
     
     	public static final String TABLA="PuntoDeControl";
     	public static final String COL_ID="idPunto";
@@ -17,8 +22,6 @@ public class PuntoDeControl implements Actualizable {
     	public static final String COL_TARIFA="tarifaDeOperacion";
     	public static final String COL_LUGAR_EN_COLA="lugarEnCola";
     	    	
-	private int codigo; 
-	private String nombre; 
 	private int codigoRuta;
 	private String cuiOperador;
 	private int capacidad;
@@ -26,23 +29,29 @@ public class PuntoDeControl implements Actualizable {
 	private int lugarEnCola;
 	private boolean tarifaGlobal;
 	
+	private ResultSet resultados;
+	
 	public static LinkedList<PuntoDeControl> puntos;
 	
 	
-	public PuntoDeControl () {
-	    super();
+	public PuntoDeControl (String nombre) {
+	    super(nombre);
 	}
 	
-	/**
-	 * @param nombre
-	 * @param cui
-	 * @param capacidad
-	 * @param tarifa
-	 */
+/**
+ * 
+ * @param codigo
+ * @param nombre
+ * @param codigoRuta
+ * @param cui
+ * @param capacidad
+ * @param usaTarifaGlobal
+ * @param tarifa
+ * @param lugarEnCola
+ */
 	public PuntoDeControl(String nombre, int codigoRuta, String cui, String capacidad, 
 		boolean usaTarifaGlobal, String tarifa, int lugarEnCola) {
-	    super();
-	    this.nombre = nombre;
+	    super( nombre);
 	    this.cuiOperador = cui;
 	    this.lugarEnCola=lugarEnCola;
 	    try {
@@ -57,30 +66,10 @@ public class PuntoDeControl implements Actualizable {
 	    }
 	}
 
-	/**
-	 * @return the codigo
-	 */
-	public int getCodigo() {
-	    return codigo;
+	public PuntoDeControl() {
+	    super();
 	}
-	/**
-	 * @param codigo the codigo to set
-	 */
-	public void setCodigo(int codigo) {
-	    this.codigo = codigo;
-	}
-	/**
-	 * @return the nombre
-	 */
-	public String getNombre() {
-	    return nombre;
-	}
-	/**
-	 * @param nombre the nombre to set
-	 */
-	public void setNombre(String nombre) {
-	    this.nombre = nombre;
-	}
+	
 	/**
 	 * @return the codigoRuta
 	 */
@@ -142,34 +131,6 @@ public class PuntoDeControl implements Actualizable {
 	    this.lugarEnCola = lugarEnCola;
 	}
 	
-	@Override
-	public String getSentence() {
-	    String codigoTarifa;
-	    if(isTarifaGlobal()) {
-		codigoTarifa= Precio.PRECIO_GLOBAL;
-	    }else{
-		String codigoPrecio = this.getNombre().toLowerCase().replace(" ", "_");  //pasamos el nombre a snak_case
-		Precio nuevoPrecio = new Precio(codigoPrecio, this.getNombre(),this.getTarifaDeOperacion());  //generamos un nuevo precio en la memoria principal
-		SqlConection.escribirRegistro(Precio.TABLA, nuevoPrecio.getColumnas(), nuevoPrecio.getSentence());
-		codigoTarifa= nuevoPrecio.getCodigo();
-	    }
-	    return "('"+this.getNombre()+"', "
-		    +this.getCodigoRuta()+", '"
-		    +this.getCuiOperador()+"',  "
-		    +this.capacidad+", '"
-		    +codigoTarifa+"', "
-		    +this.getLugarEnCola()+")";
-	}
-	
-	@Override
-	public String getColumnas() {
-	    return "("+COL_NOMBRE+", "+
-		    	COL_ID_RUTA+", "+
-		    	COL_CUI_OPERADOR+", "+
-		    	COL_CAPACIDAD+", "+
-		    	COL_TARIFA+", "+
-		    	COL_LUGAR_EN_COLA+")";
-	}
 
 	/**
 	 * @return the tarifaGlobal
@@ -184,27 +145,40 @@ public class PuntoDeControl implements Actualizable {
 	public void setTarifaGlobal(boolean tarifaGlobal) {
 	    this.tarifaGlobal = tarifaGlobal;
 	}
-
-	/**
-	public void registrarNuevoPunto(String nombreDelPunto, 
-		String cuiOperador, 
-		String capacidadDelPunto, 
-		boolean tarifaGlobal,
-		String tarifaPropia) {
-	    String precioTarifa;
-	    try {
-		    int capacidad = Integer.parseInt(capacidadDelPunto);
-		    if (tarifaGlobal)
-			precioTarifa= PREFIJO+PRECIO_GLOBAL;
-		    else {
-			precioTarifa=getCodigoPrecio(nombreDelPunto);
-		    }
-		} catch (NumberFormatException e) {
-		    JOptionPane.showMessageDialog(null, "Error de lectura de la capacidad, ingrese un numero valido",
-			    "Erro de formato", JOptionPane.ERROR_MESSAGE);
-		}
+	
+	@Override
+	public String getSentence() {
+	    String codigoTarifa= getCodigoDeTarifa(isTarifaGlobal());
+	    return "('"+this.getNombre()+"', "
+		    +this.getCodigoRuta()+", '"
+		    +this.getCuiOperador()+"',  "
+		    +this.capacidad+", '"
+		    +codigoTarifa+"', "
+		    +this.getLugarEnCola()+")";
 	}
-	*/
+	
+	private String getCodigoDeTarifa(boolean tarifaGlobal) {
+	    String tarifa=null;
+	    if(isTarifaGlobal()) {
+		tarifa= Precio.PRECIO_GLOBAL;
+	    }else{
+		String codigoPrecio = this.getNombre().toLowerCase().replace(" ", "_");  //pasamos el nombre a snak_case
+		Precio nuevoPrecio = new Precio(codigoPrecio, this.getNombre(),this.getTarifaDeOperacion());  //generamos un nuevo precio en la memoria principal
+		SqlConection.escribirRegistro(Precio.TABLA, nuevoPrecio.getColumnas(), nuevoPrecio.getSentence());
+		tarifa= nuevoPrecio.getCodigo();
+	    }
+	    return tarifa;
+	}
+
+	@Override
+	public String getColumnas() {
+	    return "("+COL_NOMBRE+", "+
+		    	COL_ID_RUTA+", "+
+		    	COL_CUI_OPERADOR+", "+
+		    	COL_CAPACIDAD+", "+
+		    	COL_TARIFA+", "+
+		    	COL_LUGAR_EN_COLA+")";
+	}
 
 	public void agregarPunto(JTable table) {
 	    if(puntos==null)
@@ -224,6 +198,85 @@ public class PuntoDeControl implements Actualizable {
 		datos[i][4]=(puntos.get(i).tarifaGlobal) ?  "Tarifa Global": "Tarifa Propia: "+puntos.get(i).getTarifaDeOperacion();
 	    }
 	    tabla.setModel(new DefaultTableModel(datos,columnas));
+	}
+
+	public boolean isIntegro() {
+	   return (this.getCodigoRuta()>0 &
+		   this.getCapacidad() >0 & 
+		   //si su propia tarifa es mayor a cero o usa tarifa global
+		   (this.getTarifaDeOperacion()>0 || this.tarifaGlobal ));
+	}
+
+	public void mostrarPuntos(JTable tablaPuntos, String texto) {
+	    DefaultTableModel model = new DefaultTableModel();
+	    resultados= SqlConection.generarConsulta("idPunto as Codigo, nombre, idRuta as 'Codigo de Ruta', "
+		    	+ "cui as Operador, capacidad, "
+		    	+ "tarifaDeOperacion as Tarifa, lugarEnCola as Posicion", "PuntoDeControl", " WHERE nombre LIKE '%"+texto+"%' ");
+		    Tablas.actualizarTabla(resultados, model);
+		    tablaPuntos.setModel(model);
+	}
+
+	public void agregarItemsAlCombo(JComboBox<String>combo, String campo, String Tabla, String where) {
+	    resultados= SqlConection.generarConsulta(campo, Tabla, where); 
+	    try {
+		while (resultados.next()) {
+		    combo.addItem(resultados.getString(1));
+		}
+	    } catch (SQLException e) {
+		e.printStackTrace();
+	    }
+	}
+
+	public void actualizarCajas(String punto, JTextField cajaCodigo, JTextField cajaNombre, JComboBox<String> comboRuta,
+		JComboBox<String> comboOperador, JTextField cajaCapacidad, JCheckBox checkTarifaGlobal,
+		JTextField cajaNuevaTarifa, JTextField cajaPosicion) {
+	    resultados = SqlConection.generarConsulta("*", "PuntoDeControl", "WHERE idPunto="+punto);
+	    try {
+		resultados.next();
+		cajaCodigo.setEditable(false);
+		cajaCodigo.setText(resultados.getString(1));
+		cajaNombre.setText(resultados.getString(2));
+		comboRuta.setEditable(false);
+		comboRuta.setSelectedItem(resultados.getString(3));
+		comboOperador.setEditable(false);
+		comboOperador.setSelectedItem(resultados.getString(4));
+		cajaCapacidad.setText(resultados.getString(5));
+		leerTarifa(punto, resultados.getString(6), checkTarifaGlobal, cajaNuevaTarifa);
+		cajaPosicion.setText(resultados.getString(7));
+	    } catch (SQLException e) {
+		if(e.getErrorCode()==0) {
+		    JOptionPane.showMessageDialog(null, "No existe el punto de control con ese codigo");
+		}
+	    }
+	    
+	}
+
+	private void leerTarifa(String idPunto, String codigoTarifa, JCheckBox checkTarifaGlobal, JTextField cajaNuevaTarifa) {
+	    ResultSet consulta = SqlConection.generarConsulta("tarifaDeOperacion", "PuntoDeControl ","WHERE idPunto="+idPunto);
+	    try {
+		consulta.next();
+		String tarifa = consulta.getString(1);
+		if(tarifa.equals("global"))
+		    checkTarifaGlobal.setSelected(true);
+		else {
+		    consulta =SqlConection.generarConsulta("precio", "Precios","WHERE codigo='"+tarifa+"'");
+		    consulta.next();
+		    cajaNuevaTarifa.setText(consulta.getString(1));
+		    checkTarifaGlobal.setSelected(false);
+		}
+	    } catch (SQLException e) {
+		e.printStackTrace();
+	    }
+	}
+
+	public String getSentenceActualizacion() {
+	    String tarifa = getCodigoDeTarifa(this.tarifaGlobal);
+	    return new String("nombre='"+this.getNombre()+"', "
+	    	+ "idRuta="+this.getCodigoRuta()+", "
+	    	+ "cui="+this.getCuiOperador()+", "
+	    	+ "capacidad="+this.getCapacidad()+", "
+	    	+ "tarifaDeOperacion='"+tarifa+"', "
+	    	+ "lugarEnCola="+this.getLugarEnCola());
 	} 
 	
 }

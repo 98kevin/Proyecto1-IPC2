@@ -82,11 +82,11 @@ public class Precio implements Actualizable{
 	    return "("+COL_CODIGO+", "+COL_NOMBRE+", "+COL_MONTO+")";
 	}
 	
-	public double calcularPrecio(int libras, String idDestino,boolean priorizado) {
+	public double calcularPrecio(int libras, int idDestino,boolean priorizado) {
 	    	double precioResultante=0;
 		ResultSet consultaPrecioDestino = SqlConection.generarConsulta("precio", "Destino","WHERE idDestino="+idDestino); //solo se consulta una columna
-		ResultSet consultaTarifa = SqlConection.generarConsulta("precio", "Precios","WHERE codigo=tarifa_libra");
-		ResultSet consultaPriorizado = SqlConection.generarConsulta("precio", "Precios","WHERE codigo=priorizacion");
+		ResultSet consultaTarifa = SqlConection.generarConsulta("precio", "Precios","WHERE codigo='tarifa_libra'");
+		ResultSet consultaPriorizado = SqlConection.generarConsulta("precio", "Precios","WHERE codigo='priorizacion'");
 		double precioDestino=0;
 		double precioLibra=0;
 		double precioPriorizado=0;
@@ -96,7 +96,7 @@ public class Precio implements Actualizable{
 			if(consultaTarifa.next()) 
 			    precioLibra = consultaTarifa.getDouble(1); //primera columna
 			if(consultaPriorizado.next()) 
-			    precioPriorizado = consultaTarifa.getDouble(1); //primera columna
+			    precioPriorizado = consultaPriorizado.getDouble(1); //primera columna
 		precioResultante = (priorizado) ? (precioDestino + (libras*precioLibra)+ precioPriorizado) :
 		    (precioDestino + (libras*precioLibra));
 		} catch (SQLException e) {
