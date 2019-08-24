@@ -9,6 +9,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 import javax.swing.JButton;
@@ -48,6 +49,7 @@ public class FormNuevaRuta extends JPanel {
      * Create the panel.
      */
     public FormNuevaRuta(Administrador admin) {
+	PuntoDeControl.puntos=new LinkedList<PuntoDeControl>();
     	setLayout(new BorderLayout(0, 0));
     	
     	JLabel lblCreacionDeNuevas = new JLabel("Creacion De Nuevas Rutas");
@@ -169,9 +171,14 @@ public class FormNuevaRuta extends JPanel {
     	botonHecho.addActionListener(new ActionListener() {
     		public void actionPerformed(ActionEvent e) {
     		    int codigoRuta= SqlConection.getUltimo(Ruta.TABLA, Ruta.COL_ID);
+    		    //sumamos un valor al ultimo codigo de la ruta
+    		    codigoRuta++; 
     		    if(Main.tm)
     			System.out.println("Ultima Ruta: "+ codigoRuta);
-    		    PuntoDeControl.puntos=(PuntoDeControl.puntos==null)? new LinkedList<PuntoDeControl>(): PuntoDeControl.puntos;
+    		    //Si los puntos de control son nulos, entonces se insatancia la lista
+    		    if(PuntoDeControl.puntos==null)
+    			PuntoDeControl.puntos =new LinkedList<PuntoDeControl>();
+    		    //Creamos un nuevo punto de control en base a los datos ingresados
     		    PuntoDeControl pt = new PuntoDeControl(cajaNombrePdC.getText(),
     			    codigoRuta,
     			    (String)cajaOperador.getSelectedItem(), 
@@ -179,7 +186,10 @@ public class FormNuevaRuta extends JPanel {
     			    checkBoxTarifaGlobal.isSelected(), 
     			    cajaTarifa.getText(),
     			    PuntoDeControl.puntos.size()+1);
-    		    pt.agregarPunto(table);
+    		    //Verificamos si tiene integridad
+    		    if(pt.isIntegro())
+    		    //agregamos el nuevo de control a la lista
+    			pt.agregarPunto(table);
     		    ocultarElementos();
     		}
     	});
@@ -243,9 +253,13 @@ public class FormNuevaRuta extends JPanel {
     	JButton botonAceptar = new JButton("Aceptar");
     	botonAceptar.addActionListener(new ActionListener() {
     		public void actionPerformed(ActionEvent e) {
-    		    admin.crearRuta(cajaNombre.getText(), cajaDestinos.getSelectedIndex()+1);
-    		    int idRuta = SqlConection.getUltimo(Ruta.TABLA, Ruta.COL_ID)+1;
-    		    admin.agragarPuntosDeControl(idRuta, PuntoDeControl.puntos);
+    		    ArrayList<String> sentencias = new ArrayList<String>();
+    		    //Creamos una nueva ruta en base a los datos ingresados
+    		    admin.crearRuta( cajaNombre.getText(), cajaDestinos.getSelectedIndex()+1);
+    		    //Se escriben los puntos de control en la base de datos
+    		    admin.obtenerSentencias(sentencias,PuntoDeControl.puntos);
+    		    //Ejecutamos la transaccion de los puntos de control
+    		    SqlConection.transaccion(sentencias);
     		    setVisible(false);
     		}
     	});
@@ -273,7 +287,7 @@ public class FormNuevaRuta extends JPanel {
 		    consulta.next();
 	    	    cajaDeTexto.setText(consulta.getString(1));
 	    	}	 catch (SQLException ex) {
-	    	    ex.printStackTrace();
+	    	    //ex.printStackTrace();
 	    	}    		    
 	}
 	
