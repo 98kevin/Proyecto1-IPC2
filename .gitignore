@@ -1,12 +1,3 @@
-
-lib/
-
-src/backend/
-
-Especificaciones\.pdf
-
+/bin/
 \.project
-
 \.classpath
-
-bin/
