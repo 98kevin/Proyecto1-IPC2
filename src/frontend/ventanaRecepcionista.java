@@ -2,14 +2,17 @@ package frontend;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 
 import backend.Recepcionista;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 
 public class ventanaRecepcionista extends JInternalFrame {
 
@@ -17,7 +20,8 @@ public class ventanaRecepcionista extends JInternalFrame {
 	 * Serializacion de la clase <code>VentanaRecepcionista</code>
 	 */
 	private static final long serialVersionUID = -7284277872685317365L;
-	private JPanel panelInterno ;
+	private JPanel panelInterno;
+	private ventanaRecepcionista propioFrame;
 	/**
 	 * Create the frame.
 	 */
@@ -26,25 +30,74 @@ public class ventanaRecepcionista extends JInternalFrame {
 		setBorder(null);
 		setBounds(100, 100, 683, 434);
 		
-		JPanel panelNorte = new JPanel();
-		getContentPane().add(panelNorte, BorderLayout.NORTH);
-		panelNorte.setLayout(new GridLayout(0, 6, 0, 0));
-		
-		JButton btnNuevoPaquete = new JButton("Nuevo");
-		btnNuevoPaquete.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			    cambiarPanel(new FormNuevoPaquete());
-			}
-		});
-		panelNorte.add(btnNuevoPaquete);
+		propioFrame=this;
 		
 		 panelInterno = new JPanel();
 		 getContentPane().add(panelInterno, BorderLayout.CENTER);
-		
+		 
+		 JMenuBar menuBar = new JMenuBar();
+		 setJMenuBar(menuBar);
+		 
+		 JMenu mnPaquete = new JMenu("Paquete");
+		 menuBar.add(mnPaquete);
+		 
+		 JMenuItem mntmNuevoPaquete = new JMenuItem("Nuevo Paquete");
+		 mntmNuevoPaquete.addActionListener(new ActionListener() {
+		 	public void actionPerformed(ActionEvent e) {
+		 	   cambiarPanel(new FormNuevoPaquete(propioFrame));
+		 	}
+		 });
+		 mnPaquete.add(mntmNuevoPaquete);
+		 
+		 JMenuItem mntmVerEstado = new JMenuItem("Ver Estado");
+		 mntmVerEstado.addActionListener(new ActionListener() {
+		 	public void actionPerformed(ActionEvent e) {
+		 	    cambiarPanel(new FormConsultaEstadoPaquete());
+		 	}
+		 });
+		 mnPaquete.add(mntmVerEstado);
+		 
+		 JMenu mnConsultar = new JMenu("Consultar");
+		 menuBar.add(mnConsultar);
+		 
+		 JMenuItem mntmPaquetesEnRuta = new JMenuItem("Paquetes en Ruta");
+		 mntmPaquetesEnRuta.addActionListener(new ActionListener() {
+		 	public void actionPerformed(ActionEvent e) {
+		 	    cambiarPanel(new ConsultaPaquetesEnRuta());
+		 	}
+		 });
+		 mnConsultar.add(mntmPaquetesEnRuta);
+		 
+		 JMenuItem mntmPaquetesListos = new JMenuItem("Paquetes Listos");
+		 mntmPaquetesListos.addActionListener(new ActionListener() {
+		 	public void actionPerformed(ActionEvent e) {
+		 	    cambiarPanel(new FormConsultaDePaquetes());
+		 	}
+		 });
+		 mnConsultar.add(mntmPaquetesListos);
+		 
+		 JMenuItem mntmPaquetesEntregados = new JMenuItem("Paquetes entregados");
+		 mntmPaquetesEntregados.addActionListener(new ActionListener() {
+		 	public void actionPerformed(ActionEvent e) {
+		 	    cambiarPanel(new ConsultaPaquetesRetirados());
+		 	}
+		 });
+		 mnConsultar.add(mntmPaquetesEntregados);
+		 
+		 JMenu mnSesion = new JMenu("Sesion");
+		 menuBar.add(mnSesion);
+		 
+		 JMenuItem mntmSalir = new JMenuItem("Salir");
+		 mntmSalir.addActionListener(new ActionListener() {
+		 	public void actionPerformed(ActionEvent e) {
+		 	    Inicio.setFrameInterno(new Login());
+		 	}
+		 });
+		 mnSesion.add(mntmSalir);
 	}
 	
 	
-	private void cambiarPanel(JPanel nuevoPanel) {
+	public void cambiarPanel(JPanel nuevoPanel) {
 	    setVisible(false);
 	    remove(panelInterno);
 	    panelInterno= nuevoPanel;
