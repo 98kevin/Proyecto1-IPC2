@@ -13,7 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-import backend.Cliente;
+import backend.Recepcionista;
 
 public class FormNuevoCliente extends JFrame {
 
@@ -28,15 +28,19 @@ public class FormNuevoCliente extends JFrame {
     private JTextField cajaDireccion;
     private JTextField cajaCorreo;
     
+    private Recepcionista recepcionista;
+    
     public FormNuevoCliente() {
 	super();
+	setTitle("Registro de Clientes");
     }
     
     /**
      * Create the frame.
      */
     public FormNuevoCliente(String casillero) {
-	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	recepcionista = new Recepcionista();
+	setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 	setBounds(100, 100, 669, 416);
 	contentPane = new JPanel();
 	contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -116,8 +120,7 @@ public class FormNuevoCliente extends JFrame {
 	JButton btnAceptar = new JButton("Aceptar");
 	btnAceptar.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
-		  Cliente cliente = new Cliente();
-		  cliente.registrarNuevoCliente(Integer.parseInt(lblSalidaCasillero.getText()), 
+		 recepcionista.registrarNuevoCliente(Integer.parseInt(lblSalidaCasillero.getText()), 
 			    cajaNit.getText(),
 			    cajaNombres.getText(),
 			    cajaApellidos.getText(),

@@ -16,30 +16,34 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+
 import backend.Cliente;
 import backend.Paquete;
+import backend.SqlConection;
 
 public class FormNuevoPaquete extends JPanel {
-	/**
+    /**
      * 
      */
     private static final long serialVersionUID = -1720339697338514591L;
 	private JTextField cajaCasillero;
 	private JTextField cajaDescripcion;
 	private JTextField cajaLibras;
-	private JTextField cajaCodigoDestino;
+	private JCheckBox checkPriorizado;
 	private JLabel etqSalidaDireccion;
 	private JLabel etqSalidaNombre;
 	private JLabel etqSalidaNit;
-	private LinkedList <Paquete> listaPaquetes ;
-	Cliente cliente;
+	private LinkedList<Paquete> listaPaquetes ;
+	private Cliente cliente;
+	private int codigoDestino;
+	private JTextField cajaIdDestino;
 
     /**
      * Create the panel.
      */
-    public FormNuevoPaquete() {
+    public FormNuevoPaquete(ventanaRecepcionista frame) {
     	setLayout(new BorderLayout(0, 0));
-    	
+    	cliente = new Cliente();
     	JLabel lblRegistroDePaquetes = new JLabel("Registro de Paquetes");
     	lblRegistroDePaquetes.setFont(new Font("Dialog", Font.BOLD, 16));
     	lblRegistroDePaquetes.setHorizontalAlignment(SwingConstants.CENTER);
@@ -63,9 +67,15 @@ public class FormNuevoPaquete extends JPanel {
     		@Override
     		public void keyPressed(KeyEvent e) {
     		    if(e.getKeyCode()==KeyEvent.VK_ENTER) {
-    			cliente = new Cliente();
-    			Cliente clienteNuevo = cliente.consultarCliente(cajaCasillero.getText());
-    			actualizarEtiquetas(clienteNuevo);
+    			try {
+    			    Cliente clienteNuevo = cliente.consultarCliente(cajaCasillero.getText());
+    			    cliente = clienteNuevo;
+    			    actualizarEtiquetas(cliente);
+    			    if(cliente!=null)
+    				cajaCasillero.setEditable(false);
+			} catch (NullPointerException e2) {
+			    e2.printStackTrace();
+			}
     		    }
     		}
     	});
@@ -95,19 +105,32 @@ public class FormNuevoPaquete extends JPanel {
     	etqPriorizado.setFont(new Font("Dialog", Font.BOLD, 14));
     	panel_1.add(etqPriorizado);
     	
-    	JCheckBox checkPriorizado = new JCheckBox("");
+    	checkPriorizado = new JCheckBox("");
     	checkPriorizado.setToolTipText("Indica si el paquete esta priorizado");
     	checkPriorizado.setFont(new Font("Dialog", Font.BOLD, 14));
     	panel_1.add(checkPriorizado);
     	
-    	JLabel etqCodigoDestino = new JLabel("Codigo Destino");
+    	JLabel etqCodigoDestino = new JLabel("Destino");
     	etqCodigoDestino.setFont(new Font("Dialog", Font.BOLD, 14));
     	panel_1.add(etqCodigoDestino);
     	
-    	cajaCodigoDestino = new JTextField();
-    	cajaCodigoDestino.setFont(new Font("Dialog", Font.PLAIN, 14));
-    	panel_1.add(cajaCodigoDestino);
-    	cajaCodigoDestino.setColumns(10);
+    	JButton btnSeleccionar = new JButton("Buscar Destino");
+    	btnSeleccionar.addActionListener(new ActionListener() {
+    		public void actionPerformed(ActionEvent e) {
+    		   new SeleccionDestino().setVisible(true);
+    		}
+    	});
+    	btnSeleccionar.setHorizontalAlignment(SwingConstants.LEFT);
+    	panel_1.add(btnSeleccionar);
+    	
+    	JLabel lblCodigoDelDestino = new JLabel("Codigo del Destino");
+    	lblCodigoDelDestino.setFont(new Font("Dialog", Font.BOLD, 14));
+    	panel_1.add(lblCodigoDelDestino);
+    	
+    	cajaIdDestino = new JTextField();
+    	cajaIdDestino.setFont(new Font("Dialog", Font.PLAIN, 14));
+    	panel_1.add(cajaIdDestino);
+    	cajaIdDestino.setColumns(10);
     	
     	JPanel panel_2 = new JPanel();
     	panel.add(panel_2);
@@ -118,11 +141,6 @@ public class FormNuevoPaquete extends JPanel {
     	botonBuscarCasillero.setBounds(12, 170, 135, 18);
     	panel_2.add(botonBuscarCasillero);
     	
-    	JButton botonBuscarDestino = new JButton("Buscar Destino");
-    	botonBuscarDestino.setFont(new Font("Dialog", Font.BOLD, 11));
-    	botonBuscarDestino.setBounds(12, 148, 135, 18);
-    	panel_2.add(botonBuscarDestino);
-    	
     	JLabel etqSalidaCantidad = new JLabel("");
     	etqSalidaCantidad.setFont(new Font("Dialog", Font.BOLD, 14));
     	etqSalidaCantidad.setBounds(353, 149, 60, 27);
@@ -131,12 +149,20 @@ public class FormNuevoPaquete extends JPanel {
     	JButton botonAgregar = new JButton("Agregar");
     	botonAgregar.addActionListener(new ActionListener() {
     		public void actionPerformed(ActionEvent e) {
-    		    listaPaquetes = (listaPaquetes==null)? new LinkedList<Paquete>(): listaPaquetes;
-    		    listaPaquetes.add(new Paquete(cajaCasillero.getText(), 
-    			   cajaDescripcion.getText(), 
-    			   cajaLibras.getText(), checkPriorizado.isSelected(), 
-    			   cajaCodigoDestino.getText()));
+    		    int idNuevaFactura= SqlConection.getUltimo("Factura", "idFactura");
+    		    idNuevaFactura++;
+    		    if(listaPaquetes==null)
+    			listaPaquetes= new LinkedList<Paquete>();
+    		    Paquete nuevoPaquete =new Paquete(cajaCasillero.getText(), 
+     			   cajaDescripcion.getText(), 
+     			   cajaLibras.getText(), 
+     			   checkPriorizado.isSelected(), 
+     			   cajaIdDestino.getText(),
+     			   idNuevaFactura); 
+    		    if(nuevoPaquete.integro())
+    			listaPaquetes.add(nuevoPaquete);
     		    etqSalidaCantidad.setText(String.valueOf(listaPaquetes.size()));
+    		    limpiarCajas();
     		}
     	});
     	botonAgregar.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -146,7 +172,7 @@ public class FormNuevoPaquete extends JPanel {
     	JButton botonFacturar = new JButton("Facturar");
     	botonFacturar.addActionListener(new ActionListener() {
     		public void actionPerformed(ActionEvent e) {
-    		    new Facturacion(cliente, listaPaquetes);
+    		    frame.cambiarPanel(new Facturacion(cliente, listaPaquetes));
     		}
     	});
     	botonFacturar.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -224,5 +250,25 @@ public class FormNuevoPaquete extends JPanel {
 	 */
 	public void setEtqSalidaNit(JLabel etqSalidaNit) {
 	    this.etqSalidaNit = etqSalidaNit;
+	}
+	
+	/**
+	 * @return the codigoDestino
+	 */
+	public int getCodigoDestino() {
+	    return codigoDestino;
+	}
+
+	/**
+	 * @param codigoDestino the codigoDestino to set
+	 */
+	public void setCodigoDestino(int codigoDestino) {
+	    this.codigoDestino = codigoDestino;
+	}
+
+	private void limpiarCajas() {
+	    cajaDescripcion.setText("");
+	    cajaLibras.setText("");
+	    checkPriorizado.setSelected(false);
 	}
 }
