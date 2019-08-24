@@ -6,6 +6,7 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.sql.ResultSet;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -16,6 +17,7 @@ import javax.swing.border.EmptyBorder;
 import backend.Administrador;
 import backend.Empleado;
 import backend.Recepcionista;
+import backend.SqlConection;
 
 public class Inicio extends JFrame {
 	/**
@@ -24,7 +26,7 @@ public class Inicio extends JFrame {
 	private static final long serialVersionUID = 2401811622519448998L;
 	private JPanel contentPane;
 	private JInternalFrame frameInterno;
-	private JPanel panelFrameInterno;
+	private static JPanel panelFrameInterno;
 	/**
 	 * Launch the application.
 	 */
@@ -45,6 +47,7 @@ public class Inicio extends JFrame {
 	 * Create the frame.
 	 */
 	public Inicio() {
+		setTitle("Registro de Paquetes - Code n Bugs");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(Toolkit.getDefaultToolkit().getScreenSize());
 		contentPane = new JPanel();
@@ -85,8 +88,7 @@ public class Inicio extends JFrame {
 		return frameInterno;
 	}
 	
-	public void setFrameInterno(JInternalFrame frameInterno) {
-		this.frameInterno = frameInterno;
+	public static void setFrameInterno(JInternalFrame frameInterno) {
 		panelFrameInterno.removeAll();
 		panelFrameInterno.add(frameInterno,BorderLayout.CENTER);
 		frameInterno.setVisible(true);
@@ -100,7 +102,10 @@ public class Inicio extends JFrame {
 			this.setFrameInterno(new VentanaAdministrador( 
 				new Administrador(empleado)));
 			break;
-		default:
+		case 2: 
+		    	this.setFrameInterno(new ventanaDeOperador(empleado.getCui()));
+		    	break;
+		case 3:
 		    	this.setFrameInterno(new ventanaRecepcionista(
 		    		new Recepcionista( empleado)));
 			break;
