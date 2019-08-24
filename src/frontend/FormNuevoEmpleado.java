@@ -33,6 +33,7 @@ public class FormNuevoEmpleado extends JPanel {
 	private JTextField cajaCorreo;
 	private JPasswordField cajaPass1;
 	private JPasswordField cajaPass2;
+	private JTextField cajaSalario;
 
     /**
      * Create the panel.
@@ -48,7 +49,7 @@ public class FormNuevoEmpleado extends JPanel {
     	
     	JPanel panelDeCampos = new JPanel();
     	add(panelDeCampos, BorderLayout.CENTER);
-    	panelDeCampos.setLayout(new GridLayout(9, 2, 10, 10));
+    	panelDeCampos.setLayout(new GridLayout(10, 2, 10, 10));
     	
     	JLabel lblCui = new JLabel("CUI");
     	lblCui.setFont(new Font("Dialog", Font.BOLD, 16));
@@ -76,6 +77,15 @@ public class FormNuevoEmpleado extends JPanel {
     	cajaApellidos.setFont(new Font("Dialog", Font.PLAIN, 16));
     	panelDeCampos.add(cajaApellidos);
     	cajaApellidos.setColumns(10);
+    	
+    	JLabel lblSalario = new JLabel("Salario");
+    	lblSalario.setFont(new Font("Dialog", Font.BOLD, 16));
+    	panelDeCampos.add(lblSalario);
+    	
+    	cajaSalario = new JTextField();
+    	cajaSalario.setFont(new Font("Dialog", Font.PLAIN, 16));
+    	panelDeCampos.add(cajaSalario);
+    	cajaSalario.setColumns(10);
     	
     	JLabel lblDireccion = new JLabel("Direccion");
     	lblDireccion.setFont(new Font("Dialog", Font.BOLD, 16));
@@ -150,7 +160,8 @@ public class FormNuevoEmpleado extends JPanel {
     		    Administrador empleado = new Administrador();
     		    empleado.registrarNuevoEmpleado(cajaCui.getText(),
     			    cajaNombres.getText(),
-    			    cajaApellidos.getText(),
+    			    cajaApellidos.getText(), 
+    			    cajaSalario.getText(),
     			    cajaDireccion.getText(),
     			    cajaCorreo.getText(),
     			    comboTipo.getSelectedIndex() +1,
