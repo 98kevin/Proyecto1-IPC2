@@ -3,6 +3,8 @@ package frontend;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.LinkedList;
@@ -17,8 +19,7 @@ import javax.swing.JTextField;
 import backend.Cliente;
 import backend.Paquete;
 import backend.Precio;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import backend.Recepcionista;
 
 public class Facturacion extends JPanel {
 
@@ -30,11 +31,13 @@ public class Facturacion extends JPanel {
     private JTextField cajaPago;
     private JTextField cajaCambio;
     private JTable table;
+    private Recepcionista recepcionista;
 
     /**
      * Create the panel.
      */
     public Facturacion(Cliente cliente, LinkedList<Paquete> paquetes){
+	recepcionista = new Recepcionista();
     	setLayout(new BorderLayout(0, 0));
     
     	JPanel panelNorte = new JPanel();
@@ -86,9 +89,10 @@ public class Facturacion extends JPanel {
     	JScrollPane scrollPane = new JScrollPane();
     	panelCentral.add(scrollPane, BorderLayout.CENTER);
     	
+    	//creacion de la tabla y llenado de la misma. 
     	table = new JTable();
     	Paquete paquete = new Paquete();
-    	paquete.llenarTablaDePaquetes(table,paquetes);
+    	table =paquete.llenarTablaDePaquetes(table,paquetes);
     	scrollPane.setViewportView(table);
     	
     	JPanel panelSur = new JPanel();
@@ -110,7 +114,7 @@ public class Facturacion extends JPanel {
     	panelSur1.add(cajaTotal);
     	cajaTotal.setColumns(10);
     	
-    	JLabel lblPagaCon = new JLabel("Paga con:");
+    	JLabel lblPagaCon = new JLabel("Paga con: ");
     	panelSur1.add(lblPagaCon);
     	
     	cajaPago = new JTextField();
@@ -118,6 +122,7 @@ public class Facturacion extends JPanel {
     		@Override
     		public void keyPressed(KeyEvent e) {
     		    if ( e.getKeyCode()==KeyEvent.VK_ENTER) {
+    			//Calculamos el cambio a dar
 			double cambio = precio.calcularCambio(cajaPago.getText(), cajaTotal.getText());
 			cajaCambio.setText(String.valueOf(cambio));
 		    }
@@ -139,7 +144,14 @@ public class Facturacion extends JPanel {
     	panelSur2.setLayout(null);
     	
     	JButton btnAceptar = new JButton("Aceptar");
-    	btnAceptar.setBounds(491, 12, 145, 27);
+    	btnAceptar.addActionListener(new ActionListener() {
+    		public void actionPerformed(ActionEvent e) {
+    		    recepcionista.ingresarPaquetes(paquetes, cliente,
+    			    Double.parseDouble(cajaTotal.getText()));
+    		    setVisible(false);
+    		}
+    	});
+    	btnAceptar.setBounds(280, 12, 145, 27);
     	panelSur2.add(btnAceptar);
     	
     	JButton btnCancelar = new JButton("Cancelar");
