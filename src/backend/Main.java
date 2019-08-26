@@ -10,10 +10,10 @@ public class Main {
 	private static final String SQL_USER="admin";
 	private static final String PASSWORD="password";
 	private static final String SQL_PORT="jdbc:mysql://localhost:3306/";
-	private static final String DATABASE_NAME="CodeNBugs";
+	private static final String DATABASE_NAME="ControlPaquetes";
 	public static Connection conexion;
 	public static Inicio ventanaPrincipal;
-	public static boolean tm =false;
+	public static boolean tm =true;
 	
 	public static void main(String[] args) {
 		try {
@@ -23,7 +23,7 @@ public class Main {
 		}
 		ventanaPrincipal = new Inicio();
 		Login inicioDeSesion = new Login();
-		ventanaPrincipal.setFrameInterno(inicioDeSesion);
+		Inicio.setFrameInterno(inicioDeSesion);
 		ventanaPrincipal.setVisible(true);
 	}
 	/**

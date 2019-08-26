@@ -1,0 +1,108 @@
+package frontend;
+
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.sql.Date;
+import java.util.Calendar;
+
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+
+import com.toedter.calendar.JDateChooser;
+
+import backend.Administrador;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
+
+public class ReporteDeRutas extends JPanel {
+	/**
+     * 
+     */
+    private static final long serialVersionUID = 7903275917333498511L;
+	private JTable table;
+	private Administrador admin;
+	private JDateChooser fechaInicial;
+	private JDateChooser fechaFinal;
+	private JComboBox<String> comboBox;
+
+    /**
+     * Create the panel.
+     */
+	public ReporteDeRutas() {
+    	admin = new Administrador();
+	setLayout(new BorderLayout(0, 0));
+    	
+    	JPanel panel = new JPanel();
+    	add(panel, BorderLayout.CENTER);
+    	panel.setLayout(new BorderLayout(0, 0));
+    	
+    	JScrollPane scrollPane = new JScrollPane();
+    	panel.add(scrollPane, BorderLayout.CENTER);
+    	
+    	table = new JTable();
+    	scrollPane.setViewportView(table);
+    	
+    	JPanel panel_1 = new JPanel();
+    	add(panel_1, BorderLayout.WEST);
+    	panel_1.setLayout(new GridLayout(12, 1, 10, 10));
+    	
+    	JLabel lblDesde = new JLabel("Desde");
+    	panel_1.add(lblDesde);
+    	
+    	fechaInicial = new JDateChooser();
+    	panel_1.add(fechaInicial);    
+    	
+    	JLabel lblHasta = new JLabel("Hasta");
+    	panel_1.add(lblHasta);
+    	
+    	fechaFinal = new JDateChooser();
+    	panel_1.add(fechaFinal);
+    	
+    	//Fecha del inicio de los tiempos 
+    	fechaInicial.setDate(new Date(0));
+    	//fecha Actual 
+    	fechaFinal.setDate(new Date(Calendar.getInstance().getTimeInMillis()));
+    	
+    	fechaInicial.addPropertyChangeListener(new PropertyChangeListener() {
+		public void propertyChange(PropertyChangeEvent evt) {
+		    llamarConsulta(table, fechaInicial, fechaFinal,comboBox);
+		}
+	});
+    	
+    	fechaFinal.addPropertyChangeListener(new PropertyChangeListener() {
+		public void propertyChange(PropertyChangeEvent evt) {
+		    llamarConsulta(table, fechaInicial, fechaFinal, comboBox);
+		}
+	});
+    	
+    	JLabel lblTipoDeRuta = new JLabel("Tipo de Ruta");
+    	panel_1.add(lblTipoDeRuta);
+    	
+    	comboBox = new JComboBox<String>();
+    	comboBox.addItemListener(new ItemListener() {
+    		public void itemStateChanged(ItemEvent e) {
+    		llamarConsulta(table, fechaInicial, fechaFinal, comboBox);
+    		}
+    	});
+    	comboBox.addItem("Ambas");
+    	comboBox.addItem("Activas");
+    	comboBox.addItem("No Activas");
+    	panel_1.add(comboBox);
+    	
+    	JButton btnExportar = new JButton("Exportar HTML");
+    	panel_1.add(btnExportar);
+    }
+
+    private void llamarConsulta(JTable table, JDateChooser fechaInicial, JDateChooser fechaFinal, JComboBox<String> tipoDeRuta) {
+	Date dateInitial = new Date(fechaInicial.getDate().getTime());
+	Date dateFinal = new Date(fechaFinal.getDate().getTime());
+	admin.reporteDeRutas(table, dateInitial.toString(), dateFinal.toString(), tipoDeRuta);
+    }
+    
+}

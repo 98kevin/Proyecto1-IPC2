@@ -8,15 +8,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 
 import backend.Administrador;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
 
 public class VentanaAdministrador extends JInternalFrame {
 	
@@ -66,7 +63,7 @@ public class VentanaAdministrador extends JInternalFrame {
 		JMenuItem mntmActivar = new JMenuItem("Activar");
 		mntmActivar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-			    cambiarPanel(new FormEditar(true, "Ruta", "estado", "idRuta as Codigo, nombre, idDestino as CodigoDestino, cantidadDePaquetesRegistrados as 'Paquetes Registrados', estado", "idRuta"));
+			    cambiarPanel(new FormEditar(true, "Ruta", "estado", "idRuta as Codigo, nombre, idDestino as CodigoDestino, estado", "idRuta"));
 			}
 		});
 		mntmDesactivarRuta.add(mntmActivar);
@@ -74,7 +71,7 @@ public class VentanaAdministrador extends JInternalFrame {
 		JMenuItem editarRuta = new JMenuItem("Desactivar");
 		editarRuta.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-			    cambiarPanel(new FormEditar(false, "Ruta", "estado", "idRuta as Codigo, nombre, idDestino as CodigoDestino, cantidadDePaquetesRegistrados as 'Paquetes Registrados', estado", "idRuta"));
+			    cambiarPanel(new FormEditar(false, "Ruta", "estado", "idRuta as Codigo, nombre, idDestino as CodigoDestino, estado", "idRuta"));
 			}
 		});
 		mntmDesactivarRuta.add(editarRuta);
@@ -100,6 +97,11 @@ public class VentanaAdministrador extends JInternalFrame {
 		menuBar.add(menuReportes);
 		
 		JMenuItem mntmRutas = new JMenuItem("Rutas");
+		mntmRutas.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			    cambiarPanel(new ReporteDeRutas());
+			}
+		});
 		menuReportes.add(mntmRutas);
 		
 		JMenuItem mntmGanancias = new JMenuItem("Ganancias");

@@ -7,7 +7,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -124,10 +124,10 @@ public class Administrador extends Empleado{
 	    	+ "AND q.idRuta=c.idRuta "
 	    	+ "AND p.llegoDestino=FALSE";
 	    if(!fechaInicial.equals(""))
-		statement.concat(" AND p.fechaDeIngreso >= '" +fechaInicial+"'");
+		statement = statement +(" AND p.fechaDeIngreso >= '" +fechaInicial+"'");
 	    if(!fechaFinal.equals("")) 
-		statement.concat(" AND p.fechaDeIngreso <= '" +fechaFinal+"'");
-	     statement.concat(")");
+		statement = statement +(" AND p.fechaDeIngreso <= '" +fechaFinal+"'");
+	    statement = statement +(")");
 	    return statement;
 	}
 	
@@ -139,38 +139,53 @@ public class Administrador extends Empleado{
 	    	+ "AND q.idRuta= r.idRuta "
 	    	+ "AND q.idRuta=c.idRuta "
 	    	+ "AND p.llegoDestino=TRUE";
-	    if(!fechaInicial.equals(""))
-		statement.concat(" AND p.fechaDeIngreso >= '" +fechaInicial+"'");
-	    if(!fechaFinal.equals("")) 
-		statement.concat(" AND p.fechaDeIngreso <= '" +fechaFinal+"'");
-	     statement.concat(")");
+	    if(!fechaInicial.equals("")) {
+		statement = statement + (" AND p.fechaDeIngreso >= '" +fechaInicial+"'");
+	    }
+	    if(!fechaFinal.equals("")) {
+		statement = statement +(" AND p.fechaDeIngreso <= '" +fechaFinal+"'");
+	    }
+	    statement = statement +(")");
 	    return statement;
 	}
 	
-	
-	public void reporteDeRutas(JTable tabla, String fechaInicial, String fechaFinal, JCheckBox rutasActivas, JCheckBox rutasInactivas) {
+	/**
+	 * 
+	 * @param tabla
+	 * @param fechaInicial
+	 * @param fechaFinal
+	 * @param rutasActivas
+	 * @param rutasInactivas
+	 */
+	public void reporteDeRutas(JTable tabla, String fechaInicial, String fechaFinal, JComboBox<String> tipoDeRuta) {
 	    Statement consulta;
 	    try {
 		consulta = Main.conexion.createStatement();
 		//generamos la consulta con la base de datos 
+		String filtroDeEstado="";
+		if (tipoDeRuta.getSelectedItem().equals("Ambas")) 
+		    filtroDeEstado =" ";
+		if(tipoDeRuta.getSelectedItem().equals("Activas"))
+		    filtroDeEstado =" AND c.estado=TRUE";
+		if(tipoDeRuta.getSelectedItem().equals("No Activas"))
+		    filtroDeEstado =" AND c.estado=FALSE";
 		ResultSet resultados = consulta.executeQuery(
 			//campos a mostar con sus respectivos alias
 			"SELECT c.idRuta as 'Codigo', c.nombre , d.nombre as 'Destino', c.estado, "
 			//el contador de paquetes fuera de fuera de ruta 
-			+contadorDePaquetesFueraDeRuta(fechaInicial, fechaFinal)+ "as 'Paquetes Fuera',"
+			+contadorDePaquetesFueraDeRuta(fechaInicial, fechaFinal)+ " as 'Paquetes Fuera',"
 			//el contador de paquetes en ruta acutalmente
-			+ contadorDePaquetesEnRuta(fechaInicial, fechaFinal)+ " as 'Paquetes en Ruta', "
+			+ contadorDePaquetesEnRuta(fechaInicial, fechaFinal)+ " as 'Paquetes en Ruta' "
 			//Las tablas doonde se consultara la informacion
 			+ "FROM Ruta c, Destino d "
 			//condiciones Where pera filtrar los datos 
 			+ "WHERE c.idDestino=d.idDestino "
-			//TODO terminar este codigo para filtrar los tipos de rutas 
-			+ "AND c.estado=TRUE");
+			+filtroDeEstado);
 		DefaultTableModel model = new DefaultTableModel();
 		Tablas.actualizarTabla(resultados, model);
+		tabla.setModel(model);
 	    } catch (SQLException e) {
 		e.printStackTrace();
 	    }
-	    
 	}
 }
