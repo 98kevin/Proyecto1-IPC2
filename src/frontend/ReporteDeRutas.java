@@ -2,9 +2,14 @@ package frontend;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.Date;
+import java.sql.ResultSet;
 import java.util.Calendar;
 
 import javax.swing.JButton;
@@ -17,8 +22,7 @@ import javax.swing.JTable;
 import com.toedter.calendar.JDateChooser;
 
 import backend.Administrador;
-import java.awt.event.ItemListener;
-import java.awt.event.ItemEvent;
+import backend.GeneradorHTML;
 
 public class ReporteDeRutas extends JPanel {
 	/**
@@ -30,7 +34,7 @@ public class ReporteDeRutas extends JPanel {
 	private JDateChooser fechaInicial;
 	private JDateChooser fechaFinal;
 	private JComboBox<String> comboBox;
-
+	private String  consulta;
     /**
      * Create the panel.
      */
@@ -96,13 +100,18 @@ public class ReporteDeRutas extends JPanel {
     	panel_1.add(comboBox);
     	
     	JButton btnExportar = new JButton("Exportar HTML");
+    	btnExportar.addActionListener(new ActionListener() {
+    		public void actionPerformed(ActionEvent e) {
+    		    GeneradorHTML.generarHTML("Reporte de Rutas", consulta);
+    		}
+    	});
     	panel_1.add(btnExportar);
     }
 
     private void llamarConsulta(JTable table, JDateChooser fechaInicial, JDateChooser fechaFinal, JComboBox<String> tipoDeRuta) {
 	Date dateInitial = new Date(fechaInicial.getDate().getTime());
 	Date dateFinal = new Date(fechaFinal.getDate().getTime());
-	admin.reporteDeRutas(table, dateInitial.toString(), dateFinal.toString(), tipoDeRuta);
+	consulta = admin.reporteDeRutas(table, dateInitial.toString(), dateFinal.toString(), tipoDeRuta);
     }
     
 }

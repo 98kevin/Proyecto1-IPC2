@@ -17,11 +17,15 @@ import javax.swing.JTable;
 import com.toedter.calendar.JDateChooser;
 
 import backend.Administrador;
+import backend.GeneradorHTML;
+
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
 import javax.swing.JTextField;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class ReporteDeGanancias extends JPanel {
 	/**
@@ -34,6 +38,7 @@ public class ReporteDeGanancias extends JPanel {
 	private JDateChooser fechaFinal;
 	private JComboBox<String> comboTipo;
 	private JTextField cajaFiltro;
+	private String consulta;
 
     /**
      * Create the panel.
@@ -113,6 +118,11 @@ public class ReporteDeGanancias extends JPanel {
     	panel_1.add(comboTipo);
     	
     	JButton btnExportar = new JButton("Exportar HTML");
+    	btnExportar.addActionListener(new ActionListener() {
+    		public void actionPerformed(ActionEvent e) {
+    		    GeneradorHTML.generarHTML("Reporte de Ganancias", consulta);
+    		}
+    	});
     	panel_1.add(btnExportar);
     }
 
@@ -120,7 +130,7 @@ public class ReporteDeGanancias extends JPanel {
 	//Convertimos la fecha a la fecha SQL
 	Date dateInitial = new Date(fechaInicial.getDate().getTime());
 	Date dateFinal = new Date(fechaFinal.getDate().getTime());
-	admin.reporteDeGanancias(table, dateInitial.toString(), dateFinal.toString(), tipoDeRuta, filtroNombre);
+	consulta = admin.reporteDeGanancias(table, dateInitial.toString(), dateFinal.toString(), tipoDeRuta, filtroNombre);
     }
     
 }

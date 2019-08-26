@@ -162,15 +162,16 @@ public class Administrador extends Empleado{
 	 * @param rutasActivas
 	 * @param rutasInactivas
 	 */
-	public void reporteDeRutas(JTable tabla, String fechaInicial, String fechaFinal, JComboBox<String> tipoDeRuta) {
+	public String reporteDeRutas(JTable tabla, String fechaInicial, String fechaFinal, JComboBox<String> tipoDeRuta) {
 	    Statement consulta;
+	    String enunciado="";
+	    ResultSet resultados;
 	    try {
 		consulta = Main.conexion.createStatement();
 		//generamos la consulta con la base de datos 
 		String filtroDeEstado="";
 		filtroDeEstado = getFiltroDeEstado(tipoDeRuta);
-		ResultSet resultados = consulta.executeQuery(
-			//campos a mostar con sus respectivos alias
+		enunciado =//campos a mostar con sus respectivos alias
 			"SELECT s.idRuta as 'Codigo', s.nombre , d.nombre as 'Destino', s.estado, "
 			//el contador de paquetes fuera de fuera de ruta 
 			+contadorDePaquetesFueraDeRuta(fechaInicial, fechaFinal)+ " as 'Paquetes Fuera',"
@@ -180,13 +181,15 @@ public class Administrador extends Empleado{
 			+ "FROM Ruta s, Destino d "
 			//condiciones Where pera filtrar los datos 
 			+ "WHERE s.idDestino=d.idDestino "
-			+filtroDeEstado);
+			+filtroDeEstado;
+		resultados = consulta.executeQuery(enunciado);
 		DefaultTableModel model = new DefaultTableModel();
 		Tablas.actualizarTabla(resultados, model);
 		tabla.setModel(model);
 	    } catch (SQLException e) {
 		e.printStackTrace();
 	    }
+	    return enunciado;
 	}
 
 	private String getFiltroDeEstado(JComboBox<String> tipoDeRuta) {
@@ -200,11 +203,12 @@ public class Administrador extends Empleado{
 	    return filtroDeEstado;
 	}
 
-	public void reporteDeGanancias(JTable tabla, String fechaInicial, String fechaFinal, JComboBox<String> estadoDeRuta,String filtroNombre) {
+	public String reporteDeGanancias(JTable tabla, String fechaInicial, String fechaFinal, JComboBox<String> estadoDeRuta,String filtroNombre) {
 	    Statement declaracion;
+	    String consulta="";
 	    //Filtro del tipo de Ruta: Activa/Inactiva
 	    String filtroDeEstado=getFiltroDeEstado(estadoDeRuta);
-	   String consulta = "SELECT s.idRuta as 'Codigo de Ruta', s.nombre as 'Nombre', d.nombre as 'Destino', "
+	   consulta = "SELECT s.idRuta as 'Codigo de Ruta', s.nombre as 'Nombre', d.nombre as 'Destino', "
 		+ getSubConsultaOperacional("SUM(p.costo)", fechaInicial, fechaFinal, "Costos", false)
 	   	+getSubConsultaOperacional("SUM(p.precioCliente)", fechaInicial, fechaFinal, "Ingresos", false)
 	   	+getSubConsultaOperacional("SUM(p.precioCliente) -SUM(p.costo)", fechaInicial, fechaFinal, "Ganancias", true)
@@ -221,6 +225,7 @@ public class Administrador extends Empleado{
 	} catch (SQLException e) {
 	    e.printStackTrace();
 	}
+	   return consulta;
 	}
 	
 	private String getSubConsultaOperacional(String campoDeOperacion,	String fechaInicial, String fechaFinal, 
@@ -287,22 +292,35 @@ public class Administrador extends Empleado{
 		panelPrincipal.add(panelScroll);
 	}
 
-	public void reporteTopRutas(JTable tabla, java.util.Date fechaInicial, java.util.Date fechaFinal) {
+	public String reporteTopRutas(JTable tabla, java.util.Date fechaInicial, java.util.Date fechaFinal) {
 	    Date fechaSqlInicial = new Date(fechaInicial.getTime());
 	    Date fechaSqlFinal = new Date(fechaFinal.getTime());
-	    ResultSet rutas = SqlConection.generarConsulta("c.idRuta, c.nombre, d.nombre AS Destino, c.estado, "+
-		   " (SELECT COUNT(*) "+
-			   " FROM Paquete p, PuntoDeControl q, Ruta r "+
-			   " WHERE p.idPunto=q.idPunto " +
-			   " AND q.idRuta= r.idRuta "
-			   + " AND p.fechaDeEgreso >= '"+fechaSqlInicial.toString()+"'"
-			   + " AND p.fechaDeEgreso <= '"+fechaSqlFinal.toString()+"'"
-			   + " AND q.idRuta=c.idRuta "+
-			   " AND p.llegoDestino=TRUE) AS Paquetes", "Ruta c, Destino d", "WHERE c.idDestino=d.idDestino "+
-			   " ORDER BY Paquetes DESC "
-			   + " LIMIT 3");
+	    Statement statement;
+	    ResultSet rutas=null;
+	    String consulta=null;
+	    try {
+		statement = Main.conexion.createStatement();
+		consulta = "SELECT c.idRuta, c.nombre, d.nombre AS Destino, c.estado, "+
+			   " (SELECT COUNT(*) "+
+				   " FROM Paquete p, PuntoDeControl q, Ruta r "+
+				   " WHERE p.idPunto=q.idPunto " +
+				   " AND q.idRuta= r.idRuta "
+				   + " AND p.fechaDeEgreso >= '"+fechaSqlInicial.toString()+"'"
+				   + " AND p.fechaDeEgreso <= '"+fechaSqlFinal.toString()+"'"
+				   + " AND q.idRuta=c.idRuta "+
+				   " AND p.llegoDestino=TRUE) AS Paquetes "
+				   + "FROM Ruta c, Destino d "
+				   + "WHERE c.idDestino=d.idDestino "+
+				   " ORDER BY Paquetes DESC "
+				   + " LIMIT 3";
+		    rutas = statement.executeQuery(consulta);
+	    } catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	    }
 		DefaultTableModel model = new DefaultTableModel();
 		Tablas.actualizarTabla(rutas, model);
 		tabla.setModel(model);
+	return consulta;
 	}
 }

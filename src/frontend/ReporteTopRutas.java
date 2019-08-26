@@ -14,11 +14,15 @@ import javax.swing.JTable;
 import com.toedter.calendar.JDateChooser;
 
 import backend.Administrador;
+import backend.GeneradorHTML;
+
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class ReporteTopRutas extends JPanel {
 	private JTable table;
 	private Administrador admin;
-	
+	private String consulta;
     /**
      * Create the panel.
      */
@@ -55,9 +59,14 @@ public class ReporteTopRutas extends JPanel {
     	panel_1.add(fechaFinal);
     	
     	JButton btnExportarHtml = new JButton("Exportar HTML");
+    	btnExportarHtml.addActionListener(new ActionListener() {
+    		public void actionPerformed(ActionEvent e) {
+    		    GeneradorHTML.generarHTML("Reporte Mejores Rutas" , consulta);
+    		}
+    	});
     	panel_1.add(btnExportarHtml);
 
-    	admin.reporteTopRutas(table, fechaInicial.getDate(), fechaFinal.getDate());
+    	consulta = admin.reporteTopRutas(table, fechaInicial.getDate(), fechaFinal.getDate());
     }
 
 }
