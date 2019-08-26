@@ -8,9 +8,14 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
+import frontend.PanelIndividualCliente;
 
 public class Administrador extends Empleado{
     
@@ -231,5 +236,73 @@ public class Administrador extends Empleado{
 	    	if(!esUltimaColumna)
 	    	    subConsulta = subConsulta + ",";
 	    	return subConsulta;
+	}
+
+	public void reporteDeClientes(JPanel panelPrincipal, String filtroCliente, java.util.Date fechaInicial, java.util.Date fechaFinal) {
+	    panelPrincipal.removeAll();
+	    Date fechaSqlInicial = new Date(fechaInicial.getTime());
+	    Date fechaSqlFinal = new Date (fechaFinal.getTime());
+	    //consultamos todos los codigos de los clientes  
+	    ResultSet clientes = SqlConection.generarConsulta("casillero,nombres, apellidos",
+		    "Cliente", 
+		    "WHERE nombres LIKE '%"+filtroCliente+"%'"
+		    	+ "OR apellidos LIKE '%"+filtroCliente+"%'");
+	    try {
+		while (clientes.next()) {
+		    consultarPaquetesDeCliente(clientes.getString(1),
+			    clientes.getString(2),
+			    clientes.getString(3),
+			    panelPrincipal,
+			    fechaSqlInicial, 
+			    fechaSqlFinal);
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	    
+	}
+
+	private void consultarPaquetesDeCliente(String casillero, String nombre, String apellidos, JPanel panelPrincipal,
+		Date fechaInicial, Date fechaFinal) {
+	   //consultamos los paquetes de un cliente
+	    JTable tabla; 
+	    JLabel lblCliente;
+	    DefaultTableModel model;
+	    lblCliente = new JLabel(nombre+apellidos);
+	    ResultSet paquetesCliente = SqlConection.generarConsulta("p.idPaquete as 'Codigo', p.descripcion, d.nombre as 'Destino', "
+	    	+ "p.idFactura as 'Codigo de Factura', p.costo, p.precioCliente  as 'Ingreso', (p.precioCliente - p.costo) as 'Ganacia Neta'",
+	    	" Paquete p, Destino d", "WHERE p.idDestino= d.idDestino"+
+	    	" AND p.llegoDestino=TRUE"+
+	    	" AND p.casilleroCliente="+casillero+
+	    	" AND p.fechaDeEgreso>='"+fechaInicial.toString()+"'"+
+	    	" AND p.fechaDeEgreso<='"+fechaFinal.toString()+"'");
+	    model = new DefaultTableModel();
+	    Tablas.actualizarTabla(paquetesCliente, model);
+	    tabla = new JTable(model);
+	    JScrollPane panelScroll = new JScrollPane();
+	    panelScroll.setAutoscrolls(true);
+	    panelScroll.setViewportView(new PanelIndividualCliente(lblCliente, tabla));
+	    //evaluamos si el cliente tiene paquetes, lo agregamos al reporte
+	    if(model.getRowCount()>0)
+		panelPrincipal.add(panelScroll);
+	}
+
+	public void reporteTopRutas(JTable tabla, java.util.Date fechaInicial, java.util.Date fechaFinal) {
+	    Date fechaSqlInicial = new Date(fechaInicial.getTime());
+	    Date fechaSqlFinal = new Date(fechaFinal.getTime());
+	    ResultSet rutas = SqlConection.generarConsulta("c.idRuta, c.nombre, d.nombre AS Destino, c.estado, "+
+		   " (SELECT COUNT(*) "+
+			   " FROM Paquete p, PuntoDeControl q, Ruta r "+
+			   " WHERE p.idPunto=q.idPunto " +
+			   " AND q.idRuta= r.idRuta "
+			   + " AND p.fechaDeEgreso >= '"+fechaSqlInicial.toString()+"'"
+			   + " AND p.fechaDeEgreso <= '"+fechaSqlFinal.toString()+"'"
+			   + " AND q.idRuta=c.idRuta "+
+			   " AND p.llegoDestino=TRUE) AS Paquetes", "Ruta c, Destino d", "WHERE c.idDestino=d.idDestino "+
+			   " ORDER BY Paquetes DESC "
+			   + " LIMIT 3");
+		DefaultTableModel model = new DefaultTableModel();
+		Tablas.actualizarTabla(rutas, model);
+		tabla.setModel(model);
 	}
 }

@@ -113,9 +113,20 @@ public class VentanaAdministrador extends JInternalFrame {
 		menuReportes.add(mntmGanancias);
 		
 		JMenuItem mntmClientes = new JMenuItem("Clientes");
+		mntmClientes.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			    JPanel reporteClientes= new ReporteClientes();
+			    cambiarPanel(reporteClientes);
+			}
+		});
 		menuReportes.add(mntmClientes);
 		
 		JMenuItem mntmTopRutas = new JMenuItem("Top 3 Rutas");
+		mntmTopRutas.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			    cambiarPanel(new ReporteTopRutas());
+			}
+		});
 		menuReportes.add(mntmTopRutas);
 		
 		JMenu menuEmpleados = new JMenu("Empleados");
