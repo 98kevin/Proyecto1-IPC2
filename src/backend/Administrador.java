@@ -121,7 +121,7 @@ public class Administrador extends Empleado{
 	    	+ "FROM Paquete p, PuntoDeControl q, Ruta r     "
 	    	+ "WHERE p.idPunto=q.idPunto   "
 	    	+ "AND q.idRuta= r.idRuta "
-	    	+ "AND q.idRuta=c.idRuta "
+	    	+ "AND q.idRuta=s.idRuta "
 	    	+ "AND p.llegoDestino=FALSE";
 	    if(!fechaInicial.equals(""))
 		statement = statement +(" AND p.fechaDeIngreso >= '" +fechaInicial+"'");
@@ -137,7 +137,7 @@ public class Administrador extends Empleado{
 	    	+ "FROM Paquete p, PuntoDeControl q, Ruta r     "
 	    	+ "WHERE p.idPunto=q.idPunto   "
 	    	+ "AND q.idRuta= r.idRuta "
-	    	+ "AND q.idRuta=c.idRuta "
+	    	+ "AND q.idRuta=s.idRuta "
 	    	+ "AND p.llegoDestino=TRUE";
 	    if(!fechaInicial.equals("")) {
 		statement = statement + (" AND p.fechaDeIngreso >= '" +fechaInicial+"'");
@@ -163,23 +163,18 @@ public class Administrador extends Empleado{
 		consulta = Main.conexion.createStatement();
 		//generamos la consulta con la base de datos 
 		String filtroDeEstado="";
-		if (tipoDeRuta.getSelectedItem().equals("Ambas")) 
-		    filtroDeEstado =" ";
-		if(tipoDeRuta.getSelectedItem().equals("Activas"))
-		    filtroDeEstado =" AND c.estado=TRUE";
-		if(tipoDeRuta.getSelectedItem().equals("No Activas"))
-		    filtroDeEstado =" AND c.estado=FALSE";
+		filtroDeEstado = getFiltroDeEstado(tipoDeRuta);
 		ResultSet resultados = consulta.executeQuery(
 			//campos a mostar con sus respectivos alias
-			"SELECT c.idRuta as 'Codigo', c.nombre , d.nombre as 'Destino', c.estado, "
+			"SELECT s.idRuta as 'Codigo', s.nombre , d.nombre as 'Destino', s.estado, "
 			//el contador de paquetes fuera de fuera de ruta 
 			+contadorDePaquetesFueraDeRuta(fechaInicial, fechaFinal)+ " as 'Paquetes Fuera',"
 			//el contador de paquetes en ruta acutalmente
 			+ contadorDePaquetesEnRuta(fechaInicial, fechaFinal)+ " as 'Paquetes en Ruta' "
 			//Las tablas doonde se consultara la informacion
-			+ "FROM Ruta c, Destino d "
+			+ "FROM Ruta s, Destino d "
 			//condiciones Where pera filtrar los datos 
-			+ "WHERE c.idDestino=d.idDestino "
+			+ "WHERE s.idDestino=d.idDestino "
 			+filtroDeEstado);
 		DefaultTableModel model = new DefaultTableModel();
 		Tablas.actualizarTabla(resultados, model);
@@ -187,5 +182,54 @@ public class Administrador extends Empleado{
 	    } catch (SQLException e) {
 		e.printStackTrace();
 	    }
+	}
+
+	private String getFiltroDeEstado(JComboBox<String> tipoDeRuta) {
+	    String filtroDeEstado=new String();
+		if (tipoDeRuta.getSelectedItem().equals("Ambas")) 
+		    filtroDeEstado =" ";
+		if(tipoDeRuta.getSelectedItem().equals("Activas"))
+		    filtroDeEstado =" AND s.estado=TRUE";
+		if(tipoDeRuta.getSelectedItem().equals("No Activas"))
+		    filtroDeEstado =" AND s.estado=FALSE";
+	    return filtroDeEstado;
+	}
+
+	public void reporteDeGanancias(JTable tabla, String fechaInicial, String fechaFinal, JComboBox<String> estadoDeRuta,String filtroNombre) {
+	    Statement declaracion;
+	    //Filtro del tipo de Ruta: Activa/Inactiva
+	    String filtroDeEstado=getFiltroDeEstado(estadoDeRuta);
+	   String consulta = "SELECT s.idRuta as 'Codigo de Ruta', s.nombre as 'Nombre', d.nombre as 'Destino', "
+		+ getSubConsultaOperacional("SUM(p.costo)", fechaInicial, fechaFinal, "Costos", false)
+	   	+getSubConsultaOperacional("SUM(p.precioCliente)", fechaInicial, fechaFinal, "Ingresos", false)
+	   	+getSubConsultaOperacional("SUM(p.precioCliente) -SUM(p.costo)", fechaInicial, fechaFinal, "Ganancias", true)
+	   	+" FROM Ruta s, Destino d "
+	   	+" WHERE s.idDestino=d.idDestino "
+	   	+" AND s.nombre LIKE '%"+filtroNombre+"%' "
+	   	+filtroDeEstado;
+	   try {
+	    declaracion = Main.conexion.createStatement();
+	    ResultSet resultados = declaracion.executeQuery(consulta);
+	    DefaultTableModel model = new DefaultTableModel();
+	    Tablas.actualizarTabla(resultados, model);
+	    tabla.setModel(model);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+	}
+	
+	private String getSubConsultaOperacional(String campoDeOperacion,	String fechaInicial, String fechaFinal, 
+		String alias, boolean esUltimaColumna) {
+	    	String subConsulta= " (SELECT "+campoDeOperacion+
+		   " FROM Paquete p, PuntoDeControl q, Ruta r "+
+		   " WHERE p.idPunto=q.idPunto"+
+		   " AND q.idRuta= r.idRuta "+
+		  "  AND q.idRuta=s.idRuta"+
+		   " AND p.llegoDestino=TRUE "+
+		   " AND p.fechaDeEgreso >= '"+fechaInicial+"' "+
+		   " AND p.fechaDeEgreso <= '"+fechaFinal+"') as '"+alias+"' ";
+	    	if(!esUltimaColumna)
+	    	    subConsulta = subConsulta + ",";
+	    	return subConsulta;
 	}
 }

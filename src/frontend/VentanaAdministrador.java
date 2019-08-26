@@ -105,6 +105,11 @@ public class VentanaAdministrador extends JInternalFrame {
 		menuReportes.add(mntmRutas);
 		
 		JMenuItem mntmGanancias = new JMenuItem("Ganancias");
+		mntmGanancias.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			    cambiarPanel(new ReporteDeGanancias());
+			}
+		});
 		menuReportes.add(mntmGanancias);
 		
 		JMenuItem mntmClientes = new JMenuItem("Clientes");
